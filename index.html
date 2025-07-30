@@ -530,9 +530,32 @@
             
             // Ensure first item is a bullet
             editor.addEventListener('focus', () => {
-                if (editor.innerHTML === '') {
+                if (editor.innerHTML === '' || editor.innerHTML.trim() === '') {
                     document.execCommand('insertHTML', false, '<li></li>');
                     setTimeout(updateAlignmentColors, 10);
+                }
+            });
+            
+            // Prevent typing outside of list items
+            editor.addEventListener('keypress', (e) => {
+                const selection = window.getSelection();
+                const range = selection.getRangeAt(0);
+                const container = range.startContainer;
+                
+                // Check if we're typing directly in the OL element
+                if (container === editor || container.parentElement === editor) {
+                    if (container.nodeType === Node.TEXT_NODE || !editor.querySelector('li')) {
+                        e.preventDefault();
+                        // Create a new list item and put the cursor in it
+                        document.execCommand('insertHTML', false, '<li></li>');
+                        const newLi = editor.querySelector('li:last-child');
+                        if (newLi) {
+                            range.selectNodeContents(newLi);
+                            range.collapse(false);
+                            selection.removeAllRanges();
+                            selection.addRange(range);
+                        }
+                    }
                 }
             });
         });
